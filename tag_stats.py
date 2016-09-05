@@ -118,10 +118,6 @@ for contest in contests:
     if not participating:
         continue
 
-    for problem in standings["problems"]:
-        for tag in problem["tags"]:
-            participated_tags[tag] += 1
-
     log.info("Prepare contest: {}, solved: {}, all: {}".format(contest_id, len(solved), len(standings["problems"])))
 
     barriers = set()
@@ -140,6 +136,8 @@ for contest in contests:
         for tag in t:
             if i in barriers:
                 participated_unsolved_tags[tag] += 1
+            if (i in barriers) or (i in solved):
+                participated_tags[tag] += 1
 
 print()
 
