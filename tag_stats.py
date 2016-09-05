@@ -10,7 +10,7 @@ import collections
 
 def get_logger():
     ch = logging.StreamHandler()
-    ch.setFormatter(logging.Formatter("%(asctime)-15s %(levelname)-6s %(message)s"))
+    ch.setFormatter(logging.Formatter("%(asctime)-15s %(levelname)-7s %(message)s"))
 
     log = logging.getLogger(__name__)
     log.addHandler(ch)
@@ -55,12 +55,14 @@ def get_args():
     return parser.parse_args()
 
 
+CODEFORCES_API_PREFIX = "http://codeforces.com/api/"
+
 def get_contests():
-    return send_request("http://codeforces.com/api/contest.list")["result"]
+    return send_request(CODEFORCES_API_PREFIX + "contest.list")["result"]
 
 
 def get_standings(handler, contest_id):
-    query = "http://codeforces.com/api/contest.standings?contestId={}&showUnofficial=true&handles={}".format(contest_id, handler)
+    query = CODEFORCES_API_PREFIX + "contest.standings?contestId={}&showUnofficial=true&handles={}".format(contest_id, handler)
     return send_request(query)["result"]
 
 
@@ -81,16 +83,20 @@ def is_valid_party(party):
 args = get_args()
 contests = get_contests()
 
-unsolved_tags = collections.defaultdict(int)
-all_tags = collections.defaultdict(int)
+participated_unsolved_tags = collections.Counter()
+participated_tags = collections.Counter()
+all_tags = collections.Counter()
 
 for contest in contests:
     if not is_valid_contest(contest):
         continue
 
-    standings = get_standings(args.handler, contest["id"])
+    contest_id = contest["id"]
 
-    solved = []
+    standings = get_standings(args.handler, contest_id)
+
+    solved = set()
+    participating = False
     for row in standings["rows"]:
         if not is_valid_party(row["party"]):
             continue
@@ -98,46 +104,59 @@ for contest in contests:
         results = row["problemResults"]
         for i in range(len(results)):
             if results[i]["points"] > 0.0:
-                solved.append(i)
-        break
+                solved.add(i)
+
+        if participating:
+            log.warning("Participating several times in contest with id = {}".format(contest_id))
+
+        participating = True
 
     for problem in standings["problems"]:
         for tag in problem["tags"]:
             all_tags[tag] += 1
 
-    if not solved:
+    if not participating:
         continue
 
-    log.info("Prepare contest: {}, solved: {}, all: {}".format(contest["id"], len(solved), len(standings["problems"])))
+    for problem in standings["problems"]:
+        for tag in problem["tags"]:
+            participated_tags[tag] += 1
+
+    log.info("Prepare contest: {}, solved: {}, all: {}".format(contest_id, len(solved), len(standings["problems"])))
 
     barriers = set()
-    for i in range(solved[-1]):
-        if i not in solved:
-            barriers.add(i)
-    barriers.add(solved[-1] + 1)
+    if not solved:
+        barriers.add(0)
+    else:
+        last_solved_problem_id = max(solved)
+        for i in range(last_solved_problem_id):
+            if i not in solved:
+                barriers.add(i)
+        barriers.add(last_solved_problem_id + 1)
 
     problems = standings["problems"]
     for i in range(len(problems)):
         t = problems[i]["tags"]
         for tag in t:
             if i in barriers:
-                unsolved_tags[tag] += 1
+                participated_unsolved_tags[tag] += 1
 
-tag_ratio = {}
-for tag in unsolved_tags:
-    tag_ratio[tag] = unsolved_tags[tag] * 1.0 / all_tags[tag]
-
-sorted_tags = []
-for k in unsolved_tags:
-    sorted_tags.append(k)
-
-sorted_tags.sort(key=lambda x: tag_ratio[x])
-sorted_tags.reverse()
+print()
 
 print("# Unsolved statistics:")
-for tag in sorted_tags:
-    print('"{}" -- ratio: {}, unsolved_count: {}, total_count: {}'.format(tag, tag_ratio[tag], unsolved_tags[tag], all_tags[tag]))
+if not participated_tags:
+    print("    You must participate in at least one contest to see unsolved statistics")
+else:
+    tag_ratio = {}
+    for tag in participated_unsolved_tags:
+        tag_ratio[tag] = participated_unsolved_tags[tag] / participated_tags[tag]
+
+    for tag in sorted(tag_ratio, key=lambda x: tag_ratio[x]):
+        print('    %-30s ratio = %-6.3f participated_unsolved_count = %-6d participated_total_count = %d' %\
+            (tag, tag_ratio[tag], participated_unsolved_tags[tag], participated_tags[tag]))
+
+print()
 
 print("# Tags statistics:")
-for tag in all_tags:
-    print("{} -- count: {}".format(tag, all_tags[tag]))
+for tag in sorted(all_tags, key=lambda x: all_tags[x]):
+    print("    %-30s count = %d" % (tag, all_tags[tag]))
