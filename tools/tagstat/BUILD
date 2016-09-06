@@ -5,6 +5,7 @@ py_binary(
     ],
     deps = [
         "//libs/logging:logging",
+        "//libs/api:api",
     ],
     main = "tagstat.py",
     # srcs_version = "PY3",

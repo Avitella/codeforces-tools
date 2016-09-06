@@ -4,55 +4,14 @@ import argparse
 import functools
 import json
 import logging
-import requests
 import time
 import collections
-import coloredlogs
 
+import libs.api
 import libs.logging
 
 
 log = libs.logging.logger("tagstat")
-
-
-def send_request(raw_query):
-    query = "http://codeforces.com/api/" + raw_query
-    remaining_attempts_number = 4
-
-    while True:
-        request = None
-
-        try:
-            request = requests.get(query, timeout=5.0)
-        except requests.exceptions.Timeout:
-            log.warning("Connection timeout, retry...")
-            continue
-        except requests.RequestException as e:
-            log.error("Unexpected error: {}".format(e))
-            if remaining_attempts_number <= 0:
-                raise
-            to_sleep = 1.0
-            log.warning("Remaining attempts number: {}, sleep({}) and retry...".format(remaining_attempts_number, to_sleep))
-            remaining_attempts_number -= 1
-            time.sleep(to_sleep)
-            continue
-
-        json = request.json()
-
-        if request.status_code == 429:
-            to_sleep = 0.5
-            log.debug("Call limit exceeded, sleep({})".format(to_sleep))
-            time.sleep(to_sleep)
-            continue
-
-        if request.status_code != 200 or json["status"] != "OK":
-            reason = "unknown"
-            if "comment" in json:
-                reason = json["comment"]
-
-            raise RuntimeError("Can't send request: {}, reason: {}, code: {}".format(query, reason, request.status_code))
-
-        return json
 
 
 def get_args():
@@ -62,12 +21,12 @@ def get_args():
 
 
 def get_contests():
-    return send_request("contest.list")["result"]
+    return libs.api.get("contest.list")["result"]
 
 
 def get_standings(handler, contest_id):
     query = "contest.standings?contestId={}&showUnofficial=true&handles={}".format(contest_id, handler)
-    return send_request(query)["result"]
+    return libs.api.get(query)["result"]
 
 
 def is_valid_contest(contest):
