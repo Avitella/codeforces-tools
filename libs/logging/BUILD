@@ -5,8 +5,8 @@ py_library(
     srcs = [
         "__init__.py",
     ],
-	deps = [
-		"//external:coloredlogs",
-	],
+    deps = [
+        "//external:coloredlogs",
+    ],
     # srcs_version = "PY3",
 )
