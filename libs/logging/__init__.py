@@ -6,6 +6,7 @@ coloredlogs.install(level="DEBUG")
 
 logging.getLogger("logging").debug("Init logging")
 
+
 def logger(name):
     log = logging.getLogger(name)
     return log
