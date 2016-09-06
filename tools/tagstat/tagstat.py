@@ -9,14 +9,17 @@ import time
 import collections
 import coloredlogs
 
+
 def setup_logger():
     logging.getLogger("requests").setLevel(logging.ERROR)
     coloredlogs.install(level="DEBUG")
     log = logging.getLogger("tagstat")
     return log
 
+
 log = setup_logger()
 log.debug("Start")
+
 
 def send_request(raw_query):
     query = "http://codeforces.com/api/" + raw_query
