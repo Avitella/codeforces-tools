@@ -23,6 +23,7 @@ log.debug("Start")
 
 def send_request(raw_query):
     query = "http://codeforces.com/api/" + raw_query
+    remaining_attempts_number = 4
 
     while True:
         request = None
@@ -30,7 +31,16 @@ def send_request(raw_query):
         try:
             request = requests.get(query, timeout=5.0)
         except requests.exceptions.Timeout:
-            log.warning("Timed out, retry...")
+            log.warning("Connection timeout, retry...")
+            continue
+        except BaseException as e:
+            log.error("Unexpected error: {}".format(e))
+            if remaining_attempts_number <= 0:
+                raise
+            to_sleep = 1.0
+            log.warning("Remaining attempts number: {}, sleep({}) and retry...".format(remaining_attempts_number, to_sleep))
+            remaining_attempts_number -= 1
+            time.sleep(to_sleep)
             continue
 
         json = request.json()
