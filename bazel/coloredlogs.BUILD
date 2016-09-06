@@ -13,5 +13,8 @@ py_library(
     imports = [
         "coloredlogs-5.0",
     ],
+	deps = [
+		"//external:humanfriendly",
+	],
     # srcs_version = "PY3",
 )
