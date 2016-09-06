@@ -103,6 +103,7 @@ for contest in contests:
             if (i in barriers) or (i in solved):
                 participated_tags[tag] += 1
 
+
 print("")
 
 print("# Unsolved statistics:")
@@ -119,8 +120,8 @@ else:
         ratio[tag] = participated_unsolved_tags[tag] * 1.0 / participated_tags[tag]
 
     for tag in sorted(rank, key=lambda x: rank[x]):
-        print('    %-30s rank = %-6.3f ratio = %-6.3f participated_unsolved_count = %-6d participated_solved_count = %d' %\
-            (tag, rank[tag], ratio[tag], participated_unsolved_tags[tag], participated_tags[tag] - participated_unsolved_tags[tag]))
+        print('    %-30s rank = %-6.3f ratio = %-6.3f participated_unsolved_count = %-6d participated_solved_count = %-4d all = %d' %\
+            (tag, rank[tag], ratio[tag], participated_unsolved_tags[tag], participated_tags[tag] - participated_unsolved_tags[tag], participated_tags[tag]))
 
 print("")
 
