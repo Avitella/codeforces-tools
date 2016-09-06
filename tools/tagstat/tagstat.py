@@ -109,16 +109,18 @@ print("# Unsolved statistics:")
 if not participated_tags:
     print("    You must participate in at least one contest to see unsolved statistics")
 else:
-    tag_rank = {}
+    rank = {}
+    ratio = {}
     for tag in participated_unsolved_tags:
-        tag_rank[tag] = libs.ml.likes_vs_dislikes_rank(\
+        rank[tag] = libs.ml.likes_vs_dislikes_rank(\
             participated_tags[tag] - participated_unsolved_tags[tag],
             participated_unsolved_tags[tag]\
         )
+        ratio[tag] = participated_unsolved_tags[tag] * 1.0 / participated_tags[tag]
 
-    for tag in sorted(tag_rank, key=lambda x: -tag_rank[x]):
-        print('    %-30s rank = %-6.3f participated_unsolved_count = %-6d participated_solved_count = %d' %\
-            (tag, tag_rank[tag], participated_unsolved_tags[tag], participated_tags[tag] - participated_unsolved_tags[tag]))
+    for tag in sorted(rank, key=lambda x: rank[x]):
+        print('    %-30s rank = %-6.3f ratio = %-6.3f participated_unsolved_count = %-6d participated_solved_count = %d' %\
+            (tag, rank[tag], ratio[tag], participated_unsolved_tags[tag], participated_tags[tag] - participated_unsolved_tags[tag]))
 
 print("")
 
