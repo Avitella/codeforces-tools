@@ -4,7 +4,7 @@ py_binary(
         "tagstat.py",
     ],
     deps = [
-        "//external:coloredlogs",
+        "//libs/logging:logging",
     ],
     main = "tagstat.py",
     # srcs_version = "PY3",

@@ -9,16 +9,10 @@ import time
 import collections
 import coloredlogs
 
-
-def setup_logger():
-    logging.getLogger("requests").setLevel(logging.ERROR)
-    coloredlogs.install(level="DEBUG")
-    log = logging.getLogger("tagstat")
-    return log
+import libs.logging
 
 
-log = setup_logger()
-log.debug("Start")
+log = libs.logging.logger("tagstat")
 
 
 def send_request(raw_query):
@@ -33,7 +27,7 @@ def send_request(raw_query):
         except requests.exceptions.Timeout:
             log.warning("Connection timeout, retry...")
             continue
-        except BaseException as e:
+        except requests.RequestException as e:
             log.error("Unexpected error: {}".format(e))
             if remaining_attempts_number <= 0:
                 raise
