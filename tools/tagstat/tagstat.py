@@ -7,21 +7,20 @@ import logging
 import requests
 import time
 import collections
+import coloredlogs
 
-def get_logger():
-    ch = logging.StreamHandler()
-    ch.setFormatter(logging.Formatter("%(asctime)-15s %(levelname)-7s %(message)s"))
-
-    log = logging.getLogger(__name__)
-    log.addHandler(ch)
-    log.setLevel(logging.DEBUG)
-
+def setup_logger():
+    logging.getLogger("requests").setLevel(logging.ERROR)
+    coloredlogs.install(level="DEBUG")
+    log = logging.getLogger("tagstat")
     return log
 
-log = get_logger()
+log = setup_logger()
 log.debug("Start")
 
-def send_request(query):
+def send_request(raw_query):
+    query = "http://codeforces.com/api/" + raw_query
+
     while True:
         request = None
 
@@ -55,14 +54,12 @@ def get_args():
     return parser.parse_args()
 
 
-CODEFORCES_API_PREFIX = "http://codeforces.com/api/"
-
 def get_contests():
-    return send_request(CODEFORCES_API_PREFIX + "contest.list")["result"]
+    return send_request("contest.list")["result"]
 
 
 def get_standings(handler, contest_id):
-    query = CODEFORCES_API_PREFIX + "contest.standings?contestId={}&showUnofficial=true&handles={}".format(contest_id, handler)
+    query = "contest.standings?contestId={}&showUnofficial=true&handles={}".format(contest_id, handler)
     return send_request(query)["result"]
 
 
@@ -96,7 +93,7 @@ for contest in contests:
     standings = get_standings(args.handler, contest_id)
 
     solved = set()
-    participating = False
+    participated = False
     for row in standings["rows"]:
         if not is_valid_party(row["party"]):
             continue
@@ -106,16 +103,16 @@ for contest in contests:
             if results[i]["points"] > 0.0:
                 solved.add(i)
 
-        if participating:
+        if participated:
             log.warning("Participating several times in contest with id = {}".format(contest_id))
 
-        participating = True
+        participated = True
 
     for problem in standings["problems"]:
         for tag in problem["tags"]:
             all_tags[tag] += 1
 
-    if not participating:
+    if not participated:
         continue
 
     log.info("Prepare contest: {}, solved: {}, all: {}".format(contest_id, len(solved), len(standings["problems"])))
