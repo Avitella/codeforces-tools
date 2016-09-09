@@ -1,0 +1,5 @@
+bazel-bin
+bazel-codeforces-tools
+bazel-genfiles
+bazel-out
+bazel-testlogs
